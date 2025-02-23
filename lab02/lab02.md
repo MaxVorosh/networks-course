@@ -62,7 +62,19 @@
 запросы и ответы со стороны сервиса для **всех** его операций.
 
 #### Демонстрация работы
-todo
+Сначала положим два объекта
+![alt text](server/postman screenshots/post_1.png)
+![alt text](<server/postman screenshots/post_2.png>)
+Попробуем получить существующий и не существующий объект
+![alt text](<server/postman screenshots/get_1.png>)
+![alt text](<server/postman screenshots/get_2.png>)
+Обновим описание второго объекта
+![alt text](<server/postman screenshots/put.png>)
+Выведем все объекты
+![alt text](<server/postman screenshots/get_all_1.png>)
+Удалим первый объект, после чего выведем все объекты снова
+![alt text](<server/postman screenshots/delete.png>)
+![alt text](<server/postman screenshots/get_all_2.png>)
 
 ### Задание В (4 балла)
 Пусть ваш продукт также имеет иконку (небольшую картинку). Формат иконки (картинки) может
@@ -84,7 +96,14 @@ todo
 ```
 
 #### Демонстрация работы
-todo
+Создадим объекты
+![alt text](<server/postman screenshots/post_image_1.png>)
+![alt text](<server/postman screenshots/post_image_2.png>)
+Добавим ему иконку
+![alt text](<server/postman screenshots/post_image_3.png>)
+Попробуем получить иконку у него и у объекта без иконки
+![alt text](<server/postman screenshots/get_image_1.png>)
+![alt text](<server/postman screenshots/get_image_2.png>)
 
 ---
 
