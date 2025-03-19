@@ -16,6 +16,7 @@ def check(smtp_socket, code):
 def send_and_check(smtp_socket, content, code, is_b64=False):
     if is_b64:
         content = base64.b64encode(bytes(content, 'utf-8')).decode('utf-8') + '\r\n'
+    print(content)
     smtp_socket.send(bytes(content, 'utf-8'))
     check(smtp_socket, code)
 
@@ -29,7 +30,7 @@ content = sys.argv[2]
 type = sys.argv[3]
 my_addr = 'ma.voroshilov2004@gmail.com'
 
-if type not in ['html', 'text']:
+if type not in ['html', 'text', 'image']:
     print('type should be html ot text')
     sys.exit()
 
@@ -39,6 +40,8 @@ if type == 'html':
     content = f.read()
     f.close()
     content_type = 'text/html'
+if type == 'image':
+    content_type = 'application/octet-stream'
 
 raw_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host = socket.gethostbyname('smtp.gmail.com')
@@ -56,6 +59,12 @@ send_and_check(smtp_socket, f"RCPT TO: <{addr}>\r\n", 250)
 send_and_check(smtp_socket, "DATA\r\n", 354)
 msg = [f"From: {my_addr}", f"To: {addr}", "Subject: Socket example",
        f"Content-Type: {content_type}", content, ".", ""]
+if type == 'image':
+    f = open(content, 'rb')
+    image_content = f.read()
+    f.close()
+    encrypted_content = base64.b64encode(image_content).decode('utf-8')
+    msg = msg[:4] + [f"Content-Disposition: attachment; filename={content}", "Content-Transfer-Encoding: base64", f"{encrypted_content}"] + msg[-2:]
 msg_string = '\r\n'.join(msg)
 send_and_check(smtp_socket, msg_string, 250)
 send_and_check(smtp_socket, "QUIT\r\n", 221)
