@@ -27,3 +27,4 @@ while True:
         print("OK")
     except Exception:
         print("Error, try again")
+ftp.close()
