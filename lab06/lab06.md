@@ -84,29 +84,37 @@
 ![alt text](images/gui1.png)
 
 Окно просмотра файлов. Создадим файл в директории ftp
+
 ![alt text](images/gui2.png)
 
 Появилось окно редактирования содержимого. Сохраним результат
+
 ![alt text](images/gui3.png)
 
 У нас появился файл. Параллельно в папке images появлялись скриншоты работы. Попробуем посмотреть содержимое
+
 ![alt text](images/gui4.png)
 
 Интерфейс тот же, но запрещено редактирование
+
 ![alt text](images/gui5.png)
 
 Обновим файл
+
 ![alt text](images/gui6.png)
 ![alt text](images/gui7.png)
 
 Проверим, что содержимое изменилось
+
 ![alt text](images/gui8.png)
 ![alt text](images/gui9.png)
 
 Удалим файл
+
 ![alt text](images/gui10.png)
 
 Файл исчез из списка
+
 ![alt text](images/gui11.png)
 
 ### FTP сервер (5 баллов)
