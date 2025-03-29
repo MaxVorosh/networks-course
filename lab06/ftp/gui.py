@@ -116,12 +116,36 @@ class Worker(QWidget):
         self.errorLbl.setGeometry(self.padding, self.allH - self.errorH - self.padding, self.w - 2 * self.padding,
                                   self.errorH)
 
+    def process_dirs(self, path, dirs):
+        for dir in dirs:
+            self.connection.cwd(dir)
+            entities = []
+            self.connection.retrlines('LIST', entities.append)
+            Q = []
+            for file in entities:
+                filename = file.split()[-1]
+                if file[0] == 'd':
+                    Q.append(filename)
+                else:
+                    self.files.append(str(path / dir / filename))
+            self.process_dirs(path / dir, Q)
+            self.connection.cwd('./..')
+
+    def read_file(self, filename):
+        parts = filename.split('\\')
+        filename = parts[-1]
+        content = []
+        for p in parts[:-1]:
+            self.connection.cwd(p)
+        self.connection.retrlines(f'RETR {filename}', content.append)
+        for _ in parts[:-1]:
+            self.connection.cwd('./..')
+        return '\n'.join(content)
+
+
     def getFilesList(self):
         self.files = []
-        self.connection.retrlines('NLST', self.files.append)
-
-        self.connection.retrlines('LIST')
-
+        self.process_dirs(pathlib.Path('.'), ['.'])
         return '\n'.join(self.files)
 
     def check(self, filename):
@@ -146,9 +170,8 @@ class Worker(QWidget):
         if filename not in self.files:
             self.error('Not such file')
             return
-        content = []
-        self.connection.retrlines(f'RETR {filename}', content.append)
-        self.sw = FileWindow('\n'.join(content), filename, self.connection, False)
+        content = self.read_file(filename)
+        self.sw = FileWindow(content, filename, self.connection, False)
         self.sw.show()
         self.close()
 
@@ -161,9 +184,8 @@ class Worker(QWidget):
         if filename not in self.files:
             self.error('Not such file')
             return
-        content = []
-        self.connection.retrlines(f'RETR {filename}', content.append)
-        self.ew = FileWindow('\n'.join(content), filename, self.connection, True)
+        content = self.read_file(filename)
+        self.ew = FileWindow(content, filename, self.connection, True)
         self.ew.show()
         self.close()
 
@@ -176,7 +198,13 @@ class Worker(QWidget):
         if filename not in self.files:
             self.error('Not such file')
             return
+        parts = filename.split('\\')
+        filename = parts[-1]
+        for p in parts[:-1]:
+            self.connection.cwd(p)
         self.connection.delete(filename)
+        for _ in parts[:-1]:
+            self.connection.cwd('./..')
 
         text = self.getFilesList()  # Maybe there is another update other than deleting
         self.filesLbl.setPlainText(text)
@@ -229,12 +257,18 @@ class FileWindow(QWidget):
         self.editSpace.setReadOnly(not self.edible)
 
     def save(self):
+        parts = self.filename.split('\\')
+        filename = parts[-1]
+        for p in parts[:-1]:
+            self.connection.cwd(p)
+
         file = io.BytesIO()
         file_wrapper = io.TextIOWrapper(file, encoding='utf-8')
         file_wrapper.write(self.editSpace.toPlainText())
         file_wrapper.seek(0)
-
-        self.connection.storbinary(f'STOR {self.filename}', file)
+        self.connection.storbinary(f'STOR {filename}', file)
+        for _ in parts[:-1]:
+            self.connection.cwd('./..')
         self.exit()
 
     def exit(self):
