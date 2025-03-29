@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import *
-import sys
 from ftplib import FTP
+import sys
+import io
+import pathlib
 
 
 class ConnectWindow(QWidget):
@@ -67,14 +69,16 @@ class Worker(QWidget):
         self.w = 500
         self.h = 500
         self.buttonH = 150
-        self.allH = self.h + self.padding + self.buttonH
+        self.errorH = 20
+        self.allH = self.h + 3 * self.padding + self.buttonH + self.errorH
 
-        self.move(800, 400)
+        self.move(800, 200)
         self.setFixedSize(self.w, self.allH)
         self.setWindowTitle('ftp client')
 
-        self.filesNames = self.getFilesList()
-        self.filesLbl = QTextEdit(self.filesNames, self)
+        filesNames = self.getFilesList()
+        self.filesLbl = QTextEdit('', self)
+        self.filesLbl.setPlainText(filesNames)
         self.filesLbl.setReadOnly(True)
         self.showerW = self.w - 2 * self.padding
         self.showerH = self.h - 2 * self.padding
@@ -108,15 +112,23 @@ class Worker(QWidget):
         self.filenameEdit.setPlaceholderText('Enter filename')
         self.filenameEdit.setGeometry(self.padding, self.h + 2 * self.padding + self.btnH, 2 * self.btnW, self.btnH)
 
+        self.errorLbl = QLabel('', self)
+        self.errorLbl.setGeometry(self.padding, self.allH - self.errorH - self.padding, self.w - 2 * self.padding,
+                                  self.errorH)
+
     def getFilesList(self):
         self.files = []
         self.connection.retrlines('NLST', self.files.append)
+
+        self.connection.retrlines('LIST')
+
         return '\n'.join(self.files)
 
     def check(self, filename):
-        return '..' not in filename
+        return '..' not in filename and pathlib.Path(filename).stem != ''
 
     def createFile(self):
+        self.errorLbl.setText('')
         filename = self.filenameEdit.toPlainText()
         if not self.check(filename):
             self.error('Bad file name')
@@ -126,6 +138,7 @@ class Worker(QWidget):
         self.close()
 
     def retreiveFile(self):
+        self.errorLbl.setText('')
         filename = self.filenameEdit.toPlainText()
         if not self.check(filename):
             self.error('Bad file name')
@@ -133,9 +146,14 @@ class Worker(QWidget):
         if filename not in self.files:
             self.error('Not such file')
             return
-        self.sw = FileWindow(filename, self.connection, False)
+        content = []
+        self.connection.retrlines(f'RETR {filename}', content.append)
+        self.sw = FileWindow('\n'.join(content), filename, self.connection, False)
+        self.sw.show()
+        self.close()
 
     def updateFile(self):
+        self.errorLbl.setText('')
         filename = self.filenameEdit.toPlainText()
         if not self.check(filename):
             self.error('Bad file name')
@@ -150,6 +168,7 @@ class Worker(QWidget):
         self.close()
 
     def deleteFile(self):
+        self.errorLbl.setText('')
         filename = self.filenameEdit.toPlainText()
         if not self.check(filename):
             self.error('Bad file name')
@@ -159,11 +178,17 @@ class Worker(QWidget):
             return
         self.connection.delete(filename)
 
+        text = self.getFilesList()  # Maybe there is another update other than deleting
+        self.filesLbl.setPlainText(text)
+
     def disconnect(self):
         self.connector = ConnectWindow()
         self.connector.show()
         self.connection.close()
         self.close()
+
+    def error(self, msg):
+        self.errorLbl.setText(msg)
 
 
 class FileWindow(QWidget):
@@ -179,11 +204,11 @@ class FileWindow(QWidget):
         self.w = 500
         self.h = 500
         self.lblH = 20
-        self.lblW = (self.w - 4 * self.padding) // 3
         self.padding = 10
+        self.lblW = (self.w - 4 * self.padding) // 3
         self.editH = self.h - self.lblH - 3 * self.padding
 
-        self.move(400, 800)
+        self.move(800, 400)
         self.setFixedSize(self.w, self.h)
         self.setWindowTitle('ftp client')
 
@@ -194,7 +219,7 @@ class FileWindow(QWidget):
         self.saveButton.setGeometry(2 * self.padding + self.lblW, self.padding, self.lblW, self.lblH)
         self.saveButton.clicked.connect(self.save)
 
-        self.exitButton = QPushButton('Save', self)
+        self.exitButton = QPushButton('Exit', self)
         self.exitButton.setGeometry(3 * self.padding + 2 * self.lblW, self.padding, self.lblW, self.lblH)
         self.exitButton.clicked.connect(self.exit)
 
@@ -204,7 +229,12 @@ class FileWindow(QWidget):
         self.editSpace.setReadOnly(not self.edible)
 
     def save(self):
-        self.connection.storelines(f'STOR {self.filename}', self.editSpace.toPlainText())
+        file = io.BytesIO()
+        file_wrapper = io.TextIOWrapper(file, encoding='utf-8')
+        file_wrapper.write(self.editSpace.toPlainText())
+        file_wrapper.seek(0)
+
+        self.connection.storbinary(f'STOR {self.filename}', file)
         self.exit()
 
     def exit(self):
