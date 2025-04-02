@@ -16,7 +16,9 @@
 5. Остановите захват пакетов в приложении Wireshark. Используйте фильтр пакетов tcp.
 
 ![alt text](images/wireshark1.png)
+
 ![alt text](images/wireshark2.png)
+
 ![alt text](images/wireshark3.png)
 
 #### Вопросы
