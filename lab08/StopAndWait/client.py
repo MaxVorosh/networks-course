@@ -20,7 +20,7 @@ f = open("example.png", "rb")
 message = list(f.read())
 f.close()
 serverPort = 9050
-timeout = int(sys.argv[1])
+timeout = float(sys.argv[1])
 block_size = (1024 - K - 2) // 8
 num = 0
 block_index = 0
@@ -35,16 +35,21 @@ while block_index < len(message):
             resp, serverAddress = clientSocket.recvfrom(2048)
             resp = list(resp)
             if len(resp) < K + 1:
+                print("Fromat error")
                 continue
             s = int(''.join(map(str, resp[:K])), 2)
             if not check_sum(resp[K:], s):
+                print("Wrong sum")
                 continue
             n = resp[K]
             if n != num:
+                print("Wrong ack number")
                 continue
             num ^= 1
             block_index += block_size
             break
     except:
-        continue
+        print("Timeout")
+
+clientSocket.sendto(bytearray([0]), ('localhost', serverPort))
 clientSocket.close()
