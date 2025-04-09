@@ -4,10 +4,9 @@ from control import get_sum, check_sum, K
 
 
 def modify_message(msg, num, end):
-    msg = list(map(int, ''.join(list(map(lambda x: bin(x)[2:].rjust(8, '0'), msg)))))
     msg = [num, int(end)] + msg
     s = get_sum(msg)
-    add_data = list(map(int, bin(s)[2:].rjust(K, '0')))
+    add_data = [s // 256, s % 256]
     return add_data + msg
 
 
@@ -21,9 +20,11 @@ message = list(f.read())
 f.close()
 serverPort = 9050
 timeout = float(sys.argv[1])
-block_size = (1024 - K - 2) // 8
+N = K // 8
+block_size = 1024 - N - 2
 num = 0
 block_index = 0
+data = []
 
 while block_index < len(message):
     print(f"{block_index}/{len(message)}")
@@ -34,22 +35,27 @@ while block_index < len(message):
         while True:
             resp, serverAddress = clientSocket.recvfrom(2048)
             resp = list(resp)
-            if len(resp) < K + 1:
-                print("Fromat error")
+            if len(resp) < N + 1:
+                print("Format error")
                 continue
-            s = int(''.join(map(str, resp[:K])), 2)
-            if not check_sum(resp[K:], s):
+            s = resp[0] * 256 + resp[1]
+            if not check_sum(resp[N:], s):
                 print("Wrong sum")
                 continue
-            n = resp[K]
+            n = resp[N]
             if n != num:
                 print("Wrong ack number")
                 continue
             num ^= 1
             block_index += block_size
+            data += resp[N + 1:]
             break
     except:
         print("Timeout")
 
 clientSocket.sendto(bytearray([0]), ('localhost', serverPort))
 clientSocket.close()
+
+f = open("received.txt", "wb")
+f.write(bytearray(data))
+f.close()
