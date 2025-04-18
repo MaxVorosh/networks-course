@@ -94,10 +94,14 @@ class AppWindow(QWidget):
 
     def do_worker_routing(self):
         def ping():
+            if not self.running:
+                return
             self.s.sendto(bytes('CON', 'utf-8'), (self.broadcast_address, self.broadcast_port))
             self.timer = Timer(self.wait, ping, [])
+            self.timer.start()
 
         self.timer = Timer(self.wait, ping, [])
+        self.timer.start()
 
     def do_master_routing(self):
         def delete_address(addr):
