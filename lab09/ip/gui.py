@@ -94,8 +94,6 @@ class AppWindow(QWidget):
 
     def do_worker_routing(self):
         def ping():
-            if not self.running:
-                return
             self.s.sendto(bytes('CON', 'utf-8'), (self.broadcast_address, self.broadcast_port))
             self.timer = Timer(self.wait, ping, [])
             self.timer.start()
@@ -137,6 +135,7 @@ class AppWindow(QWidget):
         self.socket_thread.join()
         if self.role == Role.WORKER:
             self.s.sendto(bytes('EXT', 'utf-8'), (self.broadcast_address, self.broadcast_port))
+            self.timer.cancel()
         self.listener.close()
         self.s.close()
         self.close()

@@ -117,7 +117,29 @@ IP-адрес и диапазон портов должны передавать
 <img src="images/copies.png" width=200 />
 
 #### Демонстрация работы
-todo
+
+Запустим приложение
+
+![alt text](images/broadcast_1.png)
+
+Добавим ещё одну копию с той же частотой отправки сигнала
+
+![alt text](images/broadcast_2.png)
+
+Добавим ещё одну копию с большей частотой отправки сигнала (иммитируем проблемы с сетью)
+
+![alt text](images/broadcast_3.png)
+
+Последняя копия отвалилась
+
+![alt text](images/broadcast_4.png)
+
+Закроем окна, начиная с последнего
+
+![alt text](images/broadcast_5.png)
+
+![alt text](images/broadcast_6.png)
+
 
 ## Задачи. Работа протокола TCP
 
