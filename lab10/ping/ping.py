@@ -56,18 +56,30 @@ host_name = sys.argv[2]
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname('icmp'))
 clientSocket.settimeout(1)
 host = socket.gethostbyname(host_name)
-print(host)
 time = 0
+min_rtt = 1000
+max_rtt = 0
+lost = 0
+sum_rtt = 0
 for i in range(tries):
     try:
-        clientSocket.sendto(form_packet(1, str(datetime.datetime.now().time())), (host, i + 1))
+        clientSocket.sendto(form_packet(1, str(datetime.datetime.now())), (host, i + 1))
         resp, addr = clientSocket.recvfrom(1024)
-        time = datetime.datetime.now().time()
+        time = datetime.datetime.now()
         header = resp[20:28]
         data = resp[28:]
-        resp_time = datetime.datetime.strptime(data.decode('utf-8'), "%H:%M:%S.%f").time()
-        # print(time, resp_time)
+        resp_time = datetime.datetime.strptime(data.decode('utf-8'), "%Y-%m-%d %H:%M:%S.%f")
+        diff = time - resp_time
+        rtt = diff.microseconds / 1000
+        min_rtt = min(min_rtt, rtt)
+        max_rtt = max(max_rtt, rtt)
+        sum_rtt += rtt
         print("ping")
     except Exception as e:
+        lost += 1
         print(e)
+    print(f"Min rtt: {min_rtt}ms")
+    print(f"Max rtt: {max_rtt}ms")
+    print(f"Avg rtt: {sum_rtt / (i + 1)}ms")
+    print(f"Lost: {lost / (i + 1) * 100}%")
 clientSocket.close()
